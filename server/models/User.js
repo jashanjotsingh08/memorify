@@ -10,6 +10,18 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    firstName: {
+        type: String,
+        required: true,
+    },
+    lastName: {
+        type: String,
+        required: true,
+    },
+    birthday: {
+        type: Date,
+        required: true,
+    },
     memoryBoxes: [
         {
             type: mongoose.Schema.Types.ObjectId,
