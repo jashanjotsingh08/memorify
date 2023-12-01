@@ -9,14 +9,14 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
   const login = async (data) => {
-    console.log('This was called');
+    console.log('This was called', data);
     setUser(data);
     // navigate('/', { replace: true }); // Use replace to replace the current entry in the history stack
   };
 
   const logout = () => {
     setUser(null);
-    navigate('/login'); // Redirect to the login page after logout
+    navigate('/'); // Redirect to the login page after logout
   };
 
   const value = useMemo(

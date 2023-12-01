@@ -10,7 +10,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const App = () => {
-  const { user } = useAuth();
+  const { user, login, logout } = useAuth();
   return (
     <>
       <NavigationBar />

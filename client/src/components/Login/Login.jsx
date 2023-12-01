@@ -14,13 +14,20 @@ const Login = () => {
   const handleLogin = async () => {
     try {
       const response = await api.post('auth/login', { email, password });
+      console.log('response: ', response);
       if (response.data?.token) {
         // Save the authentication token to localStorage
         localStorage.setItem('authToken', response.data.token);
+
+        const userData = {
+          email,
+          userId: response.data.userId,
+          firstName: response.data.firstName,
+        };
         // Call the login function from AuthContext to set the authenticated state.
-        login({ email, password });
+        login(userData);
         // Redirect to the home page or wherever you want to go after successful login.
-        navigate.push('/');
+        navigate('/');
       } else {
         // Handle authentication failure, show an error message, etc.
         setError('Invalid username or password');
