@@ -57,11 +57,32 @@ const loginUser = async (req, res) => {
         const token = jwt.sign({ userId: user._id }, secretKey, { expiresIn: '7d' }); // 7 days expiration
 
         // Send the token in the response
-        res.status(200).json({ token, userId: user._id });
+        res.status(200).json({ token, userId: user._id, firstName: user.firstName });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
 
-export { registerUser, loginUser };
+const getUserById = async (req, res) => {
+    try {
+        // Extract user ID from the request parameters
+        const userId = req.params.userId;
+
+        // Find the user by ID in the database
+        const user = await User.findById(userId);
+
+        // Check if the user exists
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Send the user data in the response
+        res.status(200).json(user);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
+export { registerUser, loginUser, getUserById };
