@@ -17,7 +17,7 @@ const Login = () => {
       console.log('response: ', response);
       if (response.data?.token) {
         // Save the authentication token to localStorage
-        localStorage.setItem('authToken', response.data.token);
+        // localStorage.setItem('authToken', response.data.token);
 
         const userData = {
           email,
@@ -25,7 +25,7 @@ const Login = () => {
           firstName: response.data.firstName,
         };
         // Call the login function from AuthContext to set the authenticated state.
-        login(userData);
+        login(userData, response.data.token);
         // Redirect to the home page or wherever you want to go after successful login.
         navigate('/');
       } else {

@@ -6,15 +6,18 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useLocalStorage('user', null);
+  const [authToken, setAuthToken] = useLocalStorage('authToken', null); // Add authToken storage
+
   const navigate = useNavigate();
 
-  const login = async (data) => {
-    console.log('This was called', data);
+  const login = async (data, token) => {
+    setAuthToken(token);
     setUser(data);
-    // navigate('/', { replace: true }); // Use replace to replace the current entry in the history stack
+    navigate('/', { replace: true }); // Use replace to replace the current entry in the history stack
   };
 
   const logout = () => {
+    setAuthToken(null);
     setUser(null);
     navigate('/'); // Redirect to the login page after logout
   };
@@ -22,6 +25,7 @@ export const AuthProvider = ({ children }) => {
   const value = useMemo(
     () => ({
       user,
+      authToken,
       login,
       logout,
     }),
