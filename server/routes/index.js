@@ -1,6 +1,7 @@
 import express from 'express';
 import authRoutes from './api/auth.js';
 import userRoutes from './api/user.js';
+import memoryBoxRoutes from './api/memory-box.js';
 
 const router = express.Router();
 
@@ -13,5 +14,7 @@ router.get('/', (req, res) => {
 router.use('/auth', authRoutes);
 
 router.use('/users', userRoutes);
+
+router.use('/memory-boxes', memoryBoxRoutes);
 
 export default router;

@@ -1,12 +1,6 @@
 import mongoose from 'mongoose';
-import { Collection } from './Collection'; // Adjust the path as per your file structure
-import { Memory } from './Memory'; // Adjust the path as per your file structure
 
 const memoryBoxSchema = new mongoose.Schema({
-  _id: {
-    type: mongoose.Schema.Types.ObjectId,
-    default: mongoose.Types.ObjectId,
-  },
   title: {
     type: String,
     required: true,

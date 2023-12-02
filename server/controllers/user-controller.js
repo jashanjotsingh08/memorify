@@ -3,11 +3,10 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
-const secretKey = process.env.JWT_SECRET || 'fallback-secret-key';
+const secretKey = process.env.MY_SECRET_KEY;
 
 // Function to register a new user
 const registerUser = async (req, res) => {
-    console.log("This Was called");
     try {
         // Extract email and password from request body
         const { email, password, firstName, lastName, birthday } = req.body;
