@@ -2,6 +2,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import { createS3UserFolder } from '../utils/aws-utils.js';
 
 const secretKey = process.env.MY_SECRET_KEY;
 
@@ -25,6 +26,9 @@ const registerUser = async (req, res) => {
 
         // Generate JWT token
         const token = jwt.sign({ userId: newUser._id }, secretKey, { expiresIn: '7d' }); // 7 days expiration
+
+        // Create S3 user folder and IAM policy
+        await createS3UserFolder(newUser._id);
 
         // Send the token in the response
         res.status(201).json({ token, userId: newUser._id });

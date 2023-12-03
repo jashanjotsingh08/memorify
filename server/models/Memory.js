@@ -28,7 +28,7 @@ const memorySchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
-});
+}, { timestamps: true });
 
 const Memory = mongoose.model('Memory', memorySchema);
 

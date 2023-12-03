@@ -1,6 +1,7 @@
 // memoryBoxController.js
 
 import MemoryBox from '../models/MemoryBox.js';
+import { addIAMPolicyForCollaborator, createS3Folder, deleteS3Folder } from '../utils/aws-utils.js';
 
 const getAllUserMemoryBoxes = async (req, res) => {
     try {
@@ -66,11 +67,32 @@ const createMemoryBox = async (req, res) => {
             return res.status(400).json({ message: 'Memory box with this title already exists for the user' });
         }
 
+
         const newMemoryBox = await MemoryBox.create({
             title,
             owner: userId,
             collaborators,
         });
+        // Create a subfolder for the new memory box within the user's S3 folder
+        const subfolderKey = `${userId}/${newMemoryBox._id}/`;
+        // Use the AWS SDK to create the subfolder in S3
+        // Make sure to handle errors and check if the folder already exists
+
+        // Update IAM policy for owner to grant access to the new subfolder
+        const ownerFolderKey = `${userId}/`;
+
+        await createS3Folder(subfolderKey);
+        await addIAMPolicyForCollaborator(userId, userId, ownerFolderKey);
+
+        // Create a new memory box with the owner set to the user
+
+        // Add collaborators to the memory box and update their IAM policies
+        if (collaborators && collaborators.length > 0) {
+            for (const collaboratorId of collaborators) {
+                newMemoryBox.collaborators.push({ user: collaboratorId, accessLink: 'generated-access-link' });
+                await addIAMPolicyForCollaborator(userId, collaboratorId, subfolderKey);
+            }
+        }
 
         res.status(201).json(newMemoryBox);
     } catch (error) {
@@ -100,11 +122,32 @@ const updateMemoryBox = async (req, res) => {
             }
         }
 
+        // Get the existing collaborators for comparison
+        const existingCollaborators = memoryBox.collaborators.map(collaborator => collaborator.user.toString());
+
         // Update the memory box properties
         memoryBox.title = title;
         memoryBox.collaborators = collaborators;
         memoryBox.tags = tags;
 
+
+        // Update IAM policies for collaborators with the new information
+        const subfolderKey = `${userId}/${memoryBox._id}/`;
+        if (collaborators && collaborators.length > 0) {
+            for (const collaboratorId of collaborators) {
+                if (!existingCollaborators.includes(collaboratorId.toString())) {
+                    // Collaborator is new, update IAM policy
+                    await addIAMPolicyForCollaborator(userId, collaboratorId, subfolderKey);
+                }
+            }
+
+            for (const existingCollaboratorId of existingCollaborators) {
+                if (!collaborators.includes(existingCollaboratorId.toString())) {
+                    // Collaborator has been removed, remove IAM access
+                    await removeIAMAccessForCollaborator(userId, existingCollaboratorId, subfolderKey);
+                }
+            }
+        }
         // Save the updated memory box
         await memoryBox.save();
 
@@ -117,9 +160,8 @@ const updateMemoryBox = async (req, res) => {
 
 const deleteMemoryBox = async (req, res) => {
     try {
-        const userId = req.user._id; // Assuming you have a middleware to extract userId from the JWT token
+        const userId = req.user._id;
         const memoryBoxId = req.params.id;
-
         // Find the memory box by ID where the user is the owner
         const memoryBox = await MemoryBox.findOne({ _id: memoryBoxId, owner: userId });
 
@@ -128,7 +170,18 @@ const deleteMemoryBox = async (req, res) => {
         }
 
         // Delete the memory box
-        await memoryBox.delete();
+        await memoryBox.deleteOne();
+
+        // Cleanup IAM policies for collaborators
+        const subfolderKey = `${userId}/${memoryBoxId}/`;
+        if (memoryBox.collaborators && memoryBox.collaborators.length > 0) {
+            for (const collaborator of memoryBox.collaborators) {
+                await removeIAMAccessForCollaborator(userId, collaborator.user.toString(), subfolderKey);
+            }
+        }
+
+        // Delete the corresponding folder from S3
+        await deleteS3Folder(subfolderKey);
 
         res.status(204).json(); // No content in the response
     } catch (error) {

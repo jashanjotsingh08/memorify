@@ -33,7 +33,7 @@ const memoryBoxSchema = new mongoose.Schema({
     },
   ],
   tags: [String],
-});
+}, { timestamps: true });
 
 const MemoryBox = mongoose.model('MemoryBox', memoryBoxSchema);
 

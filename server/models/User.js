@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
             ref: 'MemoryBox',
         },
     ],
-});
+}, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);
 

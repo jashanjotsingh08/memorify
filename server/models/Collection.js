@@ -23,7 +23,7 @@ const collectionSchema = new mongoose.Schema({
         ref: 'Collection',
     }],
     tags: [String]
-});
+}, { timestamps: true });
 
 const Collection = mongoose.model('Collection', collectionSchema);
 
