@@ -4,14 +4,12 @@ import { uploadToS3Bucket, deleteFromS3, getSignedUrl } from '../utils/aws-utils
 
 const createMemory = async (req, res) => {
   try {
-    // console.log('Create Memory', req.body);
     const { title, description, tags } = req.body;
     const { memoryBoxId } = req.params;
     const fileBuffer = req.file.buffer;
 
     // Check if the memory box belongs to the authenticated user
     const memoryBox = await MemoryBox.findOne({ _id: memoryBoxId });
-    console.log('memoryBox', memoryBox);
     if (!memoryBox) {
       return res.status(403).json({ error: 'Forbidden - Memory box does not belong to the user.' });
     }
@@ -43,9 +41,9 @@ const getMemory = async (req, res) => {
   try {
     const { memoryBoxId, memoryId } = req.params;
     const memory = await Memory.find({ _id: memoryId, memoryBoxId: memoryBoxId });
-    const s3Key = `${req.user._id}/${memoryBoxId}/${memory.fileName}`;
-    const signedUrl = await getSignedUrl(s3Key);
-    res.status(200).json({ ...memory, url: signedUrl });
+    // const s3Key = `${req.user._id}/${memoryBoxId}/${memory.fileName}`;
+    // const signedUrl = await getSignedUrl(s3Key);
+    res.status(200).json({ memory });
   } catch (error) {
     console.error('Error fetching memories:', error.message);
     res.status(500).json({ error: error.message });

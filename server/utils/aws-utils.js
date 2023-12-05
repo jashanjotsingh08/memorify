@@ -23,7 +23,7 @@ const createS3UserFolder = async (userId) => {
         await s3.putObject({
             Bucket: AWS_BUCKET_NAME,
             Key: userFolderKey,
-            ACL: 'private',
+            // ACL: 'private',
         }).promise();
 
 
