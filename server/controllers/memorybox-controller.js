@@ -1,6 +1,5 @@
-// memoryBoxController.js
-
 import MemoryBox from '../models/MemoryBox.js';
+import User from '../models/User.js';
 import { addIAMPolicyForCollaborator, createS3Folder, deleteS3Folder } from '../utils/aws-utils.js';
 
 const getAllUserMemoryBoxes = async (req, res) => {
@@ -8,7 +7,7 @@ const getAllUserMemoryBoxes = async (req, res) => {
         const userId = req.user._id; // Assuming you have a middleware to extract userId from the JWT token
 
         // Find all memory boxes where the user is the owner
-        const userMemoryBoxes = await MemoryBox.find({ owner: userId });
+        const userMemoryBoxes = await MemoryBox.find({ owner: userId }).populate("memories");
 
         res.status(200).json(userMemoryBoxes);
     } catch (error) {
@@ -43,7 +42,7 @@ const getMemoryBoxById = async (req, res) => {
                 { owner: userId },
                 { 'collaborators.user': userId },
             ],
-        });
+        }).populate('memories');
 
         if (!memoryBox) {
             return res.status(404).json({ message: 'Memory box not found' });
@@ -59,7 +58,8 @@ const getMemoryBoxById = async (req, res) => {
 const createMemoryBox = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { title, collaborators } = req.body;
+
+        const { title, collaborators, tags, reminders, timeCapsuleDate } = req.body;
 
         // Check if the title is unique for the user
         const existingMemoryBox = await MemoryBox.findOne({ owner: userId, title });
@@ -67,24 +67,30 @@ const createMemoryBox = async (req, res) => {
             return res.status(400).json({ message: 'Memory box with this title already exists for the user' });
         }
 
+        console.log(`Creating`, req.user);
 
         const newMemoryBox = await MemoryBox.create({
             title,
             owner: userId,
             collaborators,
+            tags,
+            reminders,
+            timeCapsuleDate
         });
+
+        const user = await User.findById(userId);
+        user.memoryBoxes.push(newMemoryBox._id);
+        await user.save();
+
         // Create a subfolder for the new memory box within the user's S3 folder
         const subfolderKey = `${userId}/${newMemoryBox._id}/`;
         // Use the AWS SDK to create the subfolder in S3
-        // Make sure to handle errors and check if the folder already exists
 
         // Update IAM policy for owner to grant access to the new subfolder
         const ownerFolderKey = `${userId}/`;
 
         await createS3Folder(subfolderKey);
         await addIAMPolicyForCollaborator(userId, userId, ownerFolderKey);
-
-        // Create a new memory box with the owner set to the user
 
         // Add collaborators to the memory box and update their IAM policies
         if (collaborators && collaborators.length > 0) {
@@ -105,7 +111,7 @@ const updateMemoryBox = async (req, res) => {
     try {
         const userId = req.user._id; // Assuming you have a middleware to extract userId from the JWT token
         const memoryBoxId = req.params.id;
-        const { title, collaborators, tags } = req.body;
+        const { title, collaborators, tags, reminders, timeCapsuleDate } = req.body;
 
         // Find the memory box by ID where the user is the owner
         const memoryBox = await MemoryBox.findOne({ _id: memoryBoxId, owner: userId });
@@ -129,6 +135,8 @@ const updateMemoryBox = async (req, res) => {
         memoryBox.title = title;
         memoryBox.collaborators = collaborators;
         memoryBox.tags = tags;
+        memoryBox.reminders = reminders;
+        memoryBox.timeCapsuleDate = timeCapsuleDate;
 
 
         // Update IAM policies for collaborators with the new information
@@ -169,9 +177,6 @@ const deleteMemoryBox = async (req, res) => {
             return res.status(404).json({ message: 'Memory box not found' });
         }
 
-        // Delete the memory box
-        await memoryBox.deleteOne();
-
         // Cleanup IAM policies for collaborators
         const subfolderKey = `${userId}/${memoryBoxId}/`;
         if (memoryBox.collaborators && memoryBox.collaborators.length > 0) {
@@ -182,6 +187,14 @@ const deleteMemoryBox = async (req, res) => {
 
         // Delete the corresponding folder from S3
         await deleteS3Folder(subfolderKey);
+
+        // Delete the memory box
+        await memoryBox.deleteOne();
+
+        // Update the User reference
+        const user = await User.findById(userId);
+        user.memoryBoxes.pull(memoryBoxId);
+        await user.save();
 
         res.status(204).json(); // No content in the response
     } catch (error) {

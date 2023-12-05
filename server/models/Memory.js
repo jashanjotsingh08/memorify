@@ -1,32 +1,27 @@
 import mongoose from 'mongoose';
-
 // Memory Model
 const memorySchema = new mongoose.Schema({
-    _id: {
-        type: mongoose.Schema.Types.ObjectId,
-        default: mongoose.Types.ObjectId,
+    memoryBox: { type: mongoose.Schema.Types.ObjectId, ref: 'MemoryBox', required: true },
+    // collection: { type: mongoose.Schema.Types.ObjectId, ref: 'Collection' },
+    contentUrl: {
+        type: String,
     },
     title: {
         type: String,
         required: true,
     },
-    content: {
+    description: {
         type: String,
-        required: true,
     },
-    media: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Media',
-        },
-    ],
-    location: {
+    fileName: {
         type: String
     },
-    tags: [String],
-    date: {
-        type: Date,
-        default: Date.now,
+    contentType: { 
+        type: String
+    },
+    tags: {
+        type: [String],
+        default: [],
     },
 }, { timestamps: true });
 

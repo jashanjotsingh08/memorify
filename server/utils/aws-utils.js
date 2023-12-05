@@ -6,7 +6,8 @@ const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
 const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
 const AWS_REGION = process.env.AWS_REGION;
 
-AWS.config.update({ region: AWS_REGION, accessKeyId: AWS_ACCESS_KEY_ID, secretAccessKey: AWS_SECRET_ACCESS_KEY });
+AWS.config.update({ region: AWS_REGION, accessKeyId: AWS_ACCESS_KEY_ID, secretAccessKey: AWS_SECRET_ACCESS_KEY,
+signatureVersion: "v4" });
 
 const s3 = new AWS.S3();
 const iam = new AWS.IAM();
@@ -157,4 +158,53 @@ const deleteS3Folder = async (folderKey) => {
     }
 };
 
-export { createS3UserFolder, addIAMPolicyForCollaborator, removeIAMAccessForCollaborator, createIAMUser, createS3Folder, deleteS3Folder };
+const createS3CollectionFolder = async (userId, collectionId) => {
+    try {
+        const collectionFolderKey = `${userId}/${collectionId}/`;
+
+        // Create a new S3 collection folder with private access
+        await createS3Folder(collectionFolderKey);
+    } catch (error) {
+        console.error('Error creating S3 collection folder:', error);
+        throw error;
+    }
+};
+
+const deleteS3CollectionFolder = async (userId, collectionId) => {
+    try {
+        const collectionFolderKey = `${userId}/${collectionId}/`;
+
+        // Delete the S3 collection folder
+        await deleteS3Folder(collectionFolderKey);
+    } catch (error) {
+        console.error('Error deleting S3 collection folder:', error);
+        throw error;
+    }
+};
+
+const uploadToS3Bucket = async function (key, body) {
+    const params = {
+        Bucket: AWS_BUCKET_NAME,
+        Key: key,
+        Body: body,
+        ACL: 'private',
+    }
+
+    return s3.upload(params).promise();
+};
+const deleteFromS3 = async (key) => {
+    const params = {
+        Bucket: AWS_BUCKET_NAME,
+        Key: key,
+    };
+
+    return s3.deleteObject(params).promise();
+};
+
+const getSignedUrl = async (key) => {
+    // Generate a signed URL that allows GET requests to the S3 object
+    const params = { Bucket: AWS_BUCKET_NAME, Key: key, Expires: 86400 }; // Expires in 60 seconds
+    return s3.getSignedUrlPromise('getObject', params);
+};
+
+export { createS3UserFolder, addIAMPolicyForCollaborator, removeIAMAccessForCollaborator, createIAMUser, createS3Folder, deleteS3Folder, uploadToS3Bucket, deleteFromS3, getSignedUrl };

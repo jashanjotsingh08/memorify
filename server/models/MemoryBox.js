@@ -19,19 +19,10 @@ const memoryBoxSchema = new mongoose.Schema({
       accessLink: String,
     },
   ],
-  contents: [
-    {
-      type: {
-        type: String,
-        enum: ['Collection', 'Memory'],
-        required: true,
-      },
-      content: {
-        type: mongoose.Schema.Types.ObjectId,
-        refPath: 'contents.type',
-      },
-    },
-  ],
+  memories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Memory' }], // References to individual memories
+  collections: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Collection' }],
+  reminders: [{ date: { type: Date, required: true } }],
+  timeCapsuleDate: { type: Date },
   tags: [String],
 }, { timestamps: true });
 

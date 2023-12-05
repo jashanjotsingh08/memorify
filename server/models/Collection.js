@@ -1,18 +1,17 @@
 import mongoose from 'mongoose';
 
 const collectionSchema = new mongoose.Schema({
-    _id: {
-        type: mongoose.Schema.Types.ObjectId,
-        default: mongoose.Types.ObjectId,
-    },
     title: {
         type: String,
         required: true,
     },
+    description: {
+        type: String
+    },
     parent: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Collection',
-        default: null, // For top-level collections
+        default: null,
     },
     memories: [{
         type: mongoose.Schema.Types.ObjectId,
@@ -24,6 +23,8 @@ const collectionSchema = new mongoose.Schema({
     }],
     tags: [String]
 }, { timestamps: true });
+
+collectionSchema.index({ tags: 1 });
 
 const Collection = mongoose.model('Collection', collectionSchema);
 
